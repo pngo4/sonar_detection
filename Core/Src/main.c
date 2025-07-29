@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <string.h>
+#include "servo.h"
+#include "HC_SR04.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,13 +64,6 @@ static void MX_TIM1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-//function to set servo angle
-void set_servo_angle(TIM_HandleTypeDef *htim, uint32_t channel, uint8_t angle)
-{
-	//map angle (0-180) to pulse width (210-1050 counts)
-	uint32_t pulse_length = 210 + (angle * (1050 - 210) / 180);
-	__HAL_TIM_SET_COMPARE(htim, channel, pulse_length);
-}
 /* USER CODE END 0 */
 
 /**
@@ -114,10 +109,10 @@ int main(void)
   {
 
 	  if(button_state == 0) {
-	  for(uint8_t angle = 0; angle <= 180; angle +=2) {
-			  set_servo_angle(&htim2,TIM_CHANNEL_1, angle);
-			 HAL_Delay(50);
-		  }
+		  for(uint8_t angle = 0; angle <= 180; angle +=2) {
+				  set_servo_angle(&htim2,TIM_CHANNEL_1, angle);
+				 HAL_Delay(50);
+			  }
 	  }
 
     /* USER CODE END WHILE */
