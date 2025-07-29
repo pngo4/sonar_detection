@@ -35,17 +35,17 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  15 .debug_rnglists 0000097c  00000000  00000000  00013e98  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  00021884  00000000  00000000  00014814  2**0
+ 16 .debug_macro  00021890  00000000  00000000  00014814  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0000dfdc  00000000  00000000  00036098  2**0
+ 17 .debug_line   0000dfdc  00000000  00000000  000360a4  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000d039c  00000000  00000000  00044074  2**0
+ 18 .debug_str    000d03c5  00000000  00000000  00044080  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  00114410  2**0
+ 19 .comment      00000043  00000000  00000000  00114445  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00003324  00000000  00000000  00114454  2**2
+ 20 .debug_frame  00003324  00000000  00000000  00114488  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 0000005c  00000000  00000000  00117778  2**0
+ 21 .debug_line_str 0000005c  00000000  00000000  001177ac  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -1285,7 +1285,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
     /**TIM2 GPIO Configuration
     PA0-WKUP     ------> TIM2_CH1
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_0;
+    GPIO_InitStruct.Pin = TIM2_Pin;
  8000a7a:	2301      	movs	r3, #1
  8000a7c:	60fb      	str	r3, [r7, #12]
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -1300,7 +1300,7 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* htim)
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
  8000a8a:	2301      	movs	r3, #1
  8000a8c:	61fb      	str	r3, [r7, #28]
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(TIM2_GPIO_Port, &GPIO_InitStruct);
  8000a8e:	f107 030c 	add.w	r3, r7, #12
  8000a92:	4619      	mov	r1, r3
  8000a94:	4804      	ldr	r0, [pc, #16]	@ (8000aa8 <HAL_TIM_MspPostInit+0x6c>)
