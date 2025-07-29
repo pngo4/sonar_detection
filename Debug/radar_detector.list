@@ -503,7 +503,7 @@ int main(void)
   while (1)
   {
 
-	  for(uint8_t angle = 0; angle <= 180; angle +=5) {
+	  for(uint8_t angle = 0; angle <= 180; angle +=2) {
  80005e6:	2300      	movs	r3, #0
  80005e8:	75fb      	strb	r3, [r7, #23]
  80005ea:	e00b      	b.n	8000604 <main+0x60>
@@ -513,12 +513,12 @@ int main(void)
  80005f0:	2100      	movs	r1, #0
  80005f2:	4808      	ldr	r0, [pc, #32]	@ (8000614 <main+0x70>)
  80005f4:	f7ff ff9c 	bl	8000530 <set_servo_angle>
-			 HAL_Delay(100);
- 80005f8:	2064      	movs	r0, #100	@ 0x64
+			 HAL_Delay(50);
+ 80005f8:	2032      	movs	r0, #50	@ 0x32
  80005fa:	f000 fb57 	bl	8000cac <HAL_Delay>
-	  for(uint8_t angle = 0; angle <= 180; angle +=5) {
+	  for(uint8_t angle = 0; angle <= 180; angle +=2) {
  80005fe:	7dfb      	ldrb	r3, [r7, #23]
- 8000600:	3305      	adds	r3, #5
+ 8000600:	3302      	adds	r3, #2
  8000602:	75fb      	strb	r3, [r7, #23]
  8000604:	7dfb      	ldrb	r3, [r7, #23]
  8000606:	2bb4      	cmp	r3, #180	@ 0xb4

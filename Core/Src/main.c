@@ -110,9 +110,9 @@ int main(void)
   while (1)
   {
 
-	  for(uint8_t angle = 0; angle <= 180; angle +=5) {
+	  for(uint8_t angle = 0; angle <= 180; angle +=2) {
 			  set_servo_angle(&htim2,TIM_CHANNEL_1, angle);
-			 HAL_Delay(100);
+			 HAL_Delay(50);
 		  }
 
     /* USER CODE END WHILE */
