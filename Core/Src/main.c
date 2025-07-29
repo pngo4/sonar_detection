@@ -45,7 +45,7 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+int button_state = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -110,10 +110,12 @@ int main(void)
   while (1)
   {
 
+	  if(button_state == 0) {
 	  for(uint8_t angle = 0; angle <= 180; angle +=2) {
 			  set_servo_angle(&htim2,TIM_CHANNEL_1, angle);
 			 HAL_Delay(50);
 		  }
+	  }
 
     /* USER CODE END WHILE */
 
@@ -300,6 +302,7 @@ static void MX_GPIO_Init(void)
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -310,7 +313,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if(GPIO_Pin == GPIO_PIN_13) //blue pushbutton pin
 	{
 		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-	};
+
+		if(button_state == 0) {
+			__HAL_RCC_TIM2_CLK_DISABLE(); // pause
+			button_state = 1;
+		} else {
+			__HAL_RCC_TIM2_CLK_ENABLE();
+			button_state = 0;
+		}
+	}
 }
 /* USER CODE END 4 */
 
