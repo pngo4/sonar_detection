@@ -231,7 +231,10 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+	if(GPIO_Pin == GPIO_PIN_13) //blue pushbutton pin
+	{
+		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+	};
 }
 /* USER CODE END 4 */
 
