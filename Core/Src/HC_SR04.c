@@ -6,17 +6,56 @@
  */
 #include "stm32f4xx_hal.h"
 #include "HC_SR04.h"
+#include <string.h>
 
 #define TRIG_PIN GPIO_PIN_12
 #define TRIG_PORT GPIOA
 #define ECHO_PIN GPIO_PIN_11
 #define ECHO_PORT GPIOA
+#define MEDIAN_FILTER_SIZE 7
 
+uint32_t dist_buffer[MEDIAN_FILTER_SIZE];
+uint8_t dist_index = 0;
+uint8_t buffer_filled = 0;
 
 uint32_t store_millis;
 uint32_t value1 = 0; //first measured value
 uint32_t value2 = 0; //second measured value
 uint16_t distance = 0; //in cm
+
+uint32_t get_median(uint32_t* values, uint8_t size) {
+	uint32_t sorted[size];
+	memcpy(sorted, values, size * sizeof(uint32_t));
+
+	//bubble sort
+
+	for(int i = 0; i < size - 1; i++) {
+		for (int j = i + 1; j < size; j++) {
+			if(sorted[i] > sorted[j]) {
+				uint32_t tmp = sorted[i];
+				sorted[i] = sorted[j];
+				sorted[j] = tmp;
+			}
+		}
+	}
+	return sorted[size/2]; // median
+}
+
+uint32_t median_filter(uint32_t new_value) {
+
+	//reject bad data, spec for HCSR04 is around 20 cm to 400 cm
+	if(new_value < 5 || new_value > 400) {
+		return get_median(dist_buffer, buffer_filled ? MEDIAN_FILTER_SIZE : dist_index);
+	}
+
+	dist_buffer[dist_index++] = new_value;
+	if(dist_index >= MEDIAN_FILTER_SIZE) {
+		dist_index = 0;
+		buffer_filled = 1;
+	}
+
+	return get_median(dist_buffer, buffer_filled ? MEDIAN_FILTER_SIZE : dist_index);
+}
 
 void HCR04_init(TIM_HandleTypeDef *tim) {
 	HAL_TIM_Base_Start(tim);

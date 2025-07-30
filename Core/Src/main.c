@@ -115,9 +115,10 @@ int main(void)
 		  for(uint8_t angle = 0; angle <= 180; angle +=2) {
 				 set_servo_angle(&htim2, TIM_CHANNEL_1, angle);
 				 uint16_t distance = HCSR04_read(&htim1);
-				 sprintf(transmit_distance_msg, "Dist: %u cm \r\n", distance);
+				 uint32_t filtered = median_filter(distance);
+				 sprintf(transmit_distance_msg, "Dist: %lu cm \r\n", filtered);
 				 HAL_UART_Transmit(&huart2, (uint8_t*)transmit_distance_msg, strlen(transmit_distance_msg), TIMEOUT);
-				 HAL_Delay(50);
+				 HAL_Delay(35);
 			  }
 	  }
 
