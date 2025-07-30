@@ -24,6 +24,7 @@
 #include <string.h>
 #include "servo.h"
 #include "HC_SR04.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,7 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TIMEOUT 100
+#define TIMEOUT 15
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -74,7 +75,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-	const char msg[] = "UART to PC success \n";
+	const char connection_msg[] = "UART to PC success \n";
+	char transmit_distance_msg[22];
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -99,8 +101,9 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Transmit(&huart2,(const uint8_t*) msg , strlen(msg), TIMEOUT);
+  HAL_UART_Transmit(&huart2,(const uint8_t*) connection_msg , strlen(connection_msg), TIMEOUT);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  HCR04_init(&htim1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,7 +113,10 @@ int main(void)
 
 	  if(button_state == 0) {
 		  for(uint8_t angle = 0; angle <= 180; angle +=2) {
-				  set_servo_angle(&htim2,TIM_CHANNEL_1, angle);
+				 set_servo_angle(&htim2, TIM_CHANNEL_1, angle);
+				 uint16_t distance = HCSR04_read(&htim1);
+				 sprintf(transmit_distance_msg, "Dist: %u cm \r\n", distance);
+				 HAL_UART_Transmit(&huart2, (uint8_t*)transmit_distance_msg, strlen(transmit_distance_msg), TIMEOUT);
 				 HAL_Delay(50);
 			  }
 	  }
@@ -189,7 +195,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 8-1;
+  htim1.Init.Prescaler = 84-1;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 0xffff-1;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -339,10 +345,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LD2_Pin|GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -350,32 +353,25 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PC0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  /*Configure GPIO pins : LD2_Pin PA12 */
+  GPIO_InitStruct.Pin = LD2_Pin|GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PC1 */
-  GPIO_InitStruct.Pin = GPIO_PIN_1;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET); //start with LED on
 
   /* USER CODE END MX_GPIO_Init_2 */
 }

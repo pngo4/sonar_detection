@@ -9,5 +9,7 @@
 #define INC_HC_SR04_H_
 
 
+void HCR04_init(TIM_HandleTypeDef *tim);
+uint16_t HCSR04_read(TIM_HandleTypeDef *tim);
 
 #endif /* INC_HC_SR04_H_ */
