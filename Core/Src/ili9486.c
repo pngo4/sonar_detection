@@ -1,72 +1,41 @@
-
-
-/*
- * ili9486.c - ILI9486 demo for STM32F4.
- *
- * Copyright (C) 2016 Jan Havran
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- */
-
-#include "stm32f4xx.h"
 #include "ili9486.h"
-/*
- * FIXME: HW SPI is badly implemented
- * fix it and remove software implementation
- */
-#define CUSTOM_SPI
+#include "stm32f4xx_hal.h"
 
-#define SCLK_GPIO	GPIO_Pin_5
-#define MOSI_GPIO	GPIO_Pin_7
-#define CE0_GPIO	GPIO_Pin_9
-#define RS_GPIO		GPIO_Pin_10
-#define DC_GPIO		GPIO_Pin_8
+// === Pin definitions ===
+// Change these to match your CubeMX GPIO config
+#define MOSI_GPIO_PIN   GPIO_PIN_7  // PA7
+#define SCLK_GPIO_PIN   GPIO_PIN_5  // PA5
+#define CE0_GPIO_PIN    GPIO_PIN_10 // PA10
+#define DC_GPIO_PIN     GPIO_PIN_9  // PA9
+#define RST_GPIO_PIN    GPIO_PIN_8  // PA8
+#define MOSI_GPIO_PORT  GPIOA
+#define SCLK_GPIO_PORT  GPIOA
+#define CE0_GPIO_PORT   GPIOA
+#define DC_GPIO_PORT    GPIOA
+#define RST_GPIO_PORT   GPIOA
 
-#ifndef CUSTOM_SPI
-	#define SCLK_SOURCE	GPIO_PinSource5
-	#define MOSI_SOURCE	GPIO_PinSource7
-#endif	// CUSTOM_SPI
+// Init table from original source
+static const int ili9486_init_seq[] = {
+    -1, 0xB0, 0x00,
+    -1, 0x11, -2, 250,
+    -1, 0x3A, 0x55,
+    -1, 0x36, 0x28,
+    -1, 0xC2, 0x44,
+    -1, 0xC5, 0x00, 0x00, 0x00, 0x00,
+    -1, 0xE0, 0x0F, 0x1F, 0x1C, 0x0C, 0x0F, 0x08, 0x48, 0x98, 0x37, 0x0A, 0x13, 0x04, 0x11, 0x0D, 0x00,
+    -1, 0xE1, 0x0F, 0x32, 0x2E, 0x0B, 0x0D, 0x05, 0x47, 0x75, 0x37, 0x06, 0x10, 0x03, 0x24, 0x20, 0x00,
+    -1, 0xE2, 0x0F, 0x32, 0x2E, 0x0B, 0x0D, 0x05, 0x47, 0x75, 0x37, 0x06, 0x10, 0x03, 0x24, 0x20, 0x00,
+    -1, 0x36, 0x28,
+    -1, 0x11,
+    -1, 0x29, -2, 250,
+    -3
+};
 
-#define MIN(a,b)	(((a) < (b)) ? (a) : (b))
-
-const int ili9486_init[] = {
-	// Interface Mode Control
-	-1, 0xb0, 0x0,
-	// Sleep OUT
-	-1, 0x11,
-	-2, 250,
-	// Interface Pixel Format, 16 bits / pixel
-	-1, 0x3A, 0x55,
-	// Memory Access Control
-	-1, 0x36, 0x28,
-	// Power Control 3 (For Normal Mode)
-	-1, 0xC2, 0x44,
-	// VCOM Control
-	-1, 0xC5, 0x00, 0x00, 0x00, 0x00,
-	// PGAMCTRL(Positive Gamma Control)
-	-1, 0xE0, 0x0F, 0x1F, 0x1C, 0x0C, 0x0F, 0x08, 0x48, 0x98, 0x37, 0x0A,
-		0x13, 0x04, 0x11, 0x0D, 0x00,
-	// NGAMCTRL (Negative Gamma Correction)
-	-1, 0xE1, 0x0F, 0x32, 0x2E, 0x0B, 0x0D, 0x05, 0x47, 0x75, 0x37, 0x06,
-		0x10, 0x03, 0x24, 0x20, 0x00,
-	// Digital Gamma Control 1
-	-1, 0xE2, 0x0F, 0x32, 0x2E, 0x0B, 0x0D, 0x05, 0x47, 0x75, 0x37, 0x06,
-		0x10, 0x03, 0x24, 0x20, 0x00,
-	// Memory Access Control, BGR
-	-1, 0x36, 0x28,
-	// # Sleep OUT
-	-1, 0x11,
-	// Display ON
-	-1, 0x29,
-	-2, 250,
-	-3};
-
-const int small_font_width = 8;
-const int small_font_height = 12;
-const int small_font_start = 0x20;
-const int small_font_size = 94;
+// Font details (copy from original)
+#define FONT_W  8
+#define FONT_H  12
+#define FONT_START 0x20
+#define FONT_SIZE  94
 const unsigned char small_font[] = {
 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // <Space>
 0x00,0x00,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x20,0x00,0x00, // !
@@ -165,270 +134,92 @@ const unsigned char small_font[] = {
 0x40,0xA4,0x18,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // ~
 };
 
-void ms_delay(unsigned ms)
-{
-	unsigned x;
-	while (ms > 0) {
-		x=5971;
-		while (x > 0) {
-			__asm("nop");
-			x--;
-		}
-		ms--;
-	}
+
+
+
+static void ms_delay(unsigned ms) {
+    HAL_Delay(ms);
 }
 
-#ifdef CUSTOM_SPI
-void CustomSPI_SendData(uint16_t data)
-{
-	int i;
-
-	for (i = 0; i < 16; i++) {
-		if ((data << i) & 0x8000)
-			GPIO_SetBits(GPIOA, MOSI_GPIO);
-		else
-			GPIO_ResetBits(GPIOA, MOSI_GPIO);
-
-		GPIO_SetBits(GPIOA, SCLK_GPIO);
-		GPIO_ResetBits(GPIOA, SCLK_GPIO);
-	}
-}
-#endif	// CUSTOM_SPI
-
-void XSPI_SendData(uint16_t data)
-{
-	GPIO_ResetBits(GPIOA, CE0_GPIO);
-
-#ifndef CUSTOM_SPI
-	SPI_SendData(SPI1, data);
-	while (SPI_GetFlagStatus(SPI1, SPI_I2S_FLAG_BSY)) ;
-	while (SPI_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE)) ;
-#else
-	CustomSPI_SendData(data);
-#endif	// CUSTOM_SPI
-
-	GPIO_SetBits(GPIOA, CE0_GPIO);
+static void xs_send16(uint16_t data) {
+    HAL_GPIO_WritePin(CE0_GPIO_PORT, CE0_GPIO_PIN, GPIO_PIN_RESET);
+    for (int i = 0; i < 16; i++) {
+        HAL_GPIO_WritePin(MOSI_GPIO_PORT, MOSI_GPIO_PIN, (data & (1 << (15 - i))) ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(SCLK_GPIO_PORT, SCLK_GPIO_PIN, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(SCLK_GPIO_PORT, SCLK_GPIO_PIN, GPIO_PIN_RESET);
+    }
+    HAL_GPIO_WritePin(CE0_GPIO_PORT, CE0_GPIO_PIN, GPIO_PIN_SET);
 }
 
-void SendCmd(uint16_t cmd)
-{
-	GPIO_ResetBits(GPIOA, DC_GPIO);
-	XSPI_SendData(cmd);
+static void send_cmd(uint16_t cmd) {
+    HAL_GPIO_WritePin(DC_GPIO_PORT, DC_GPIO_PIN, GPIO_PIN_RESET);
+    xs_send16(cmd);
 }
 
-void SendParams(uint16_t params)
-{
-	GPIO_SetBits(GPIOA, DC_GPIO);
-	XSPI_SendData(params);
+static void send_param(uint16_t param) {
+    HAL_GPIO_WritePin(DC_GPIO_PORT, DC_GPIO_PIN, GPIO_PIN_SET);
+    xs_send16(param);
 }
 
-void init_stm32(void)
-{
-	GPIO_InitTypeDef GPIO_InitStructure;
-#ifndef CUSTOM_SPI
-	SPI_InitTypeDef  SPI_InitStructure;
-#endif	// CUSTOM_SPI
+void ili9486_init(void) {
+    // Toggle reset
+    HAL_GPIO_WritePin(RST_GPIO_PORT, RST_GPIO_PIN, GPIO_PIN_RESET);
+    ms_delay(20);
+    HAL_GPIO_WritePin(RST_GPIO_PORT, RST_GPIO_PIN, GPIO_PIN_SET);
+    ms_delay(120);
 
-	/* Enable peripheral clock for SPI1 */
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
-
-	/* Enable peripheral clock for GPIO A */
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-
-	/* Common GPIO config */
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
-
-	/* Output GPIO config */
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;	// output
-#ifndef CUSTOM_SPI
-	GPIO_InitStructure.GPIO_Pin = RS_GPIO | DC_GPIO | CE0_GPIO;
-#else
-	GPIO_InitStructure.GPIO_Pin = RS_GPIO | DC_GPIO | CE0_GPIO | SCLK_GPIO |
-		MOSI_GPIO;
-#endif	// CUSTOM_SPI
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-#ifdef CUSTOM_SPI
-	GPIO_ResetBits(GPIOA, MOSI_GPIO);
-	GPIO_ResetBits(GPIOA, SCLK_GPIO);
-#endif	// CUSTOM_SPI
-	GPIO_SetBits(GPIOA, CE0_GPIO);
-
-#ifndef CUSTOM_SPI
-	/* SPI GPIO config */
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-
-	/* Init SCLK*/
-	GPIO_InitStructure.GPIO_Pin = SCLK_GPIO;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-	GPIO_PinAFConfig(GPIOA, SCLK_SOURCE, GPIO_AF_SPI1);
-
-	/* Init MOSI */
-	GPIO_InitStructure.GPIO_Pin =  MOSI_GPIO;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-	GPIO_PinAFConfig(GPIOA, MOSI_SOURCE, GPIO_AF_SPI1);
-
-	/* Init SPI */
-	SPI_DeInit(SPI1);
-	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
-	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
-	SPI_InitStructure.SPI_DataSize = SPI_DataSize_16b;
-	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;	//clock is low when idle
-	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
-	SPI_InitStructure.SPI_NSS = SPI_NSS_Hard;
-	SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;
-	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
-	SPI_Init(SPI1, &SPI_InitStructure);
-
-	/* Enable SPI */
-	SPI_Cmd(SPI1, ENABLE);
-#endif	// CUSTOM_SPI
+    const int* cmd = ili9486_init_seq;
+    int is_cmd = 0;
+    for (;;) {
+        int v = *cmd++;
+        if (v == -1) is_cmd = 1;
+        else if (v == -2) { ms_delay(*cmd++); }
+        else if (v == -3) break;
+        else {
+            if (is_cmd) { send_cmd(v); is_cmd = 0; }
+            else { send_param(v); }
+        }
+    }
 }
 
-void init_ili9486(const int code[])
-{
-	int done = 0;
-	int const *cmd = ili9486_init;
-	int is_cmd = 0;
-
-	/* Reset LCD */
-	GPIO_SetBits(GPIOA, RS_GPIO);
-	GPIO_ResetBits(GPIOA, RS_GPIO);
-	GPIO_SetBits(GPIOA, RS_GPIO);
-
-	/* Write init code */
-	while (!done) {
-		switch (*cmd) {
-		case -1:
-			is_cmd = 1;
-			break;
-		case -2:
-			cmd++;
-			ms_delay(*cmd);
-			break;
-		case -3:
-			done = 1;
-			break;
-		default:
-			if (is_cmd) {
-				SendCmd((uint16_t) *cmd);
-				is_cmd = 0;
-			}
-			else
-				SendParams((uint16_t) *cmd);
-
-			break;
-		}
-		cmd++;
-	}
+void draw_pixel(uint16_t x, uint16_t y, uint16_t color) {
+    send_cmd(0x2A);
+    send_param(x >> 8); send_param(x & 0xFF); send_param(x >> 8); send_param(x & 0xFF);
+    send_cmd(0x2B);
+    send_param(y >> 8); send_param(y & 0xFF); send_param(y >> 8); send_param(y & 0xFF);
+    send_cmd(0x2C);
+    send_param(color);
 }
 
-int font_is_set(unsigned char c, int x, int y)
-{
-	char byte;
-	int val = (int) c - small_font_start;
-
-	if (val < 0 || val >= small_font_size)
-		return 0;
-	if (x > small_font_width || y > small_font_height)
-		return 0;
-
-	byte = small_font[val * small_font_height + y];
-
-	return (byte << x) & 0x80;
+void fill_screen(uint16_t color) {
+    for (uint16_t y = 0; y < 320; y++) {
+        for (uint16_t x = 0; x < 480; x++) {
+            draw_pixel(x, y, color);
+        }
+    }
 }
 
-uint16_t set_color(uint8_t r, uint8_t g, uint8_t b)
-{
-	uint16_t color;
-
-	color  = MIN((uint16_t) r, 0x1F) << 11;
-	color |= MIN((uint16_t) g, 0x3F) << 5;
-	color |= MIN((uint16_t) b, 0x1F);
-
-	return color;
+static int font_bit(unsigned char c, int xi, int yi) {
+    int idx = (int)c - FONT_START;
+    if (idx < 0 || idx >= FONT_SIZE || xi>=FONT_W || yi>=FONT_H) return 0;
+    return (small_font[idx * FONT_H + yi] << xi) & 0x80;
 }
 
-void draw_pixel(int x, int y, uint16_t color)
-{
-	/* Set X coord */
-	SendCmd(0x2A);
-	SendParams(x >> 8);
-	SendParams(x);
-	SendParams(x >> 8);
-	SendParams(x);
-
-	/* Set Y coord */
-	SendCmd(0x2B);
-	SendParams(y >> 8);
-	SendParams(y);
-	SendParams(y >> 8);
-	SendParams(y);
-
-	/* Write data */
-	SendCmd(0x2C);
-	SendParams(color);
+void lcd_printf(int x, int y, const char* str, uint16_t color) {
+    int orig_x = x;
+    for (; *str; str++) {
+        if (*str == '\n') {
+            y += (FONT_H + 1);
+            x = orig_x;
+        } else {
+            for (int yi = 0; yi < FONT_H; yi++) {
+                for (int xi = 0; xi < FONT_W; xi++) {
+                    if (font_bit((unsigned char)*str, xi, yi)) {
+                        draw_pixel(x + xi, y + yi, color);
+                    }
+                }
+            }
+            x += (FONT_W + 1);
+        }
+    }
 }
-
-void lcd_char(char c, int x, int y, uint16_t color)
-{
-	int i, j;
-
-	for (i = 0; i < small_font_height; i++) {
-		for (j = 0; j < small_font_width; j++) {
-			if (font_is_set(c, j, i))
-				draw_pixel(x, y, color);
-			x += 1;
-		}
-		x -= 8;
-		y += 1;
-	}
-}
-
-void lcd_printf(const char *str, int x, int y, uint16_t color)
-{
-	const char *c = str;
-	int x_s = x;
-
-	while (*c != '\0') {
-		if (*c == '\n') {
-			y += 13;
-			x = x_s;
-		}
-		else {
-			lcd_char(*c, x, y, color);
-			x += 9;
-		}
-		c++;
-	}
-}
-
-int main(void)
-{
-	int i;
-	uint16_t color;
-
-	init_stm32();
-	init_ili9486(ili9486_init);
-
-	color = set_color(28, 45, 10);
-	lcd_printf("ILI9486 driver\n"
-		"STM32F4 - NUCLEO-F446RE\n"
-		"Bare metal",
-		30, 80, color);
-
-	for (i = 0; i < 64; i++) {
-		color = set_color(i, i, i);
-		draw_pixel(30 + i, 120, color);
-	}
-
-	while (1)
-		;
-}
-
-

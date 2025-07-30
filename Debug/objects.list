@@ -1,4 +1,5 @@
 "./Core/Src/HC_SR04.o"
+"./Core/Src/ili9486.o"
 "./Core/Src/main.o"
 "./Core/Src/servo.o"
 "./Core/Src/stm32f4xx_hal_msp.o"
