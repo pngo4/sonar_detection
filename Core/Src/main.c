@@ -24,7 +24,6 @@
 #include <string.h>
 #include "servo.h"
 #include "HC_SR04.h"
-#include "ili9486.h"
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -105,10 +104,6 @@ int main(void)
   HAL_UART_Transmit(&huart2,(const uint8_t*) connection_msg , strlen(connection_msg), TIMEOUT);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   HCR04_init(&htim1);
-  ili9486_init();
-  fill_screen(0x001F); //fill screen with blue
-  lcd_printf(10, 10, "Hello STM32!", 0xFFFF);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
