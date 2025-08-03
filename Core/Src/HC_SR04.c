@@ -23,7 +23,7 @@ uint32_t value1 = 0; //first measured value
 uint32_t value2 = 0; //second measured value
 uint16_t distance = 0; //in cm
 
-uint32_t get_median(uint32_t* values, uint8_t size) {
+static uint32_t get_median(uint32_t* values, uint8_t size) {
 	uint32_t sorted[size];
 	memcpy(sorted, values, size * sizeof(uint32_t));
 

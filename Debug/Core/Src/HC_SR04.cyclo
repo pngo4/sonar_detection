@@ -1,4 +1,4 @@
-../Core/Src/HC_SR04.c:26:10:get_median	4
+../Core/Src/HC_SR04.c:26:17:get_median	4
 ../Core/Src/HC_SR04.c:44:10:median_filter	6
 ../Core/Src/HC_SR04.c:60:6:HCR04_init	1
 ../Core/Src/HC_SR04.c:66:10:HCSR04_read	6
