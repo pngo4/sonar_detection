@@ -53,6 +53,8 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 int button_state = 0;
+static uint16_t current_angle = 0;
+static int8_t direction =1; //1 is forward, -1 is reverse
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -133,20 +135,30 @@ int main(void)
   {
 
 	  if(button_state == 0) {
-		  for(uint16_t angle = 0; angle <= 180; angle +=2) {
-				 set_servo_angle(&htim2, TIM_CHANNEL_1, angle);
-				 uint16_t distance = HCSR04_read(&htim1);
-				 uint32_t filtered = median_filter(distance);
-				 sprintf(transmit_distance_msg, "Dist: %lu cm \r\n", filtered);
-				 HAL_UART_Transmit(&huart2, (uint8_t*)transmit_distance_msg, strlen(transmit_distance_msg), TIMEOUT);
-				 HAL_Delay(35);
-			  }
-	  }
+		  set_servo_angle(&htim2, TIM_CHANNEL_1, current_angle);
 
+		  uint16_t distance = HCSR04_read(&htim1);
+		  uint32_t filtered = median_filter(distance);
+		  sprintf(transmit_distance_msg, "Dist: %lu cm \r\n", filtered);
+		  HAL_UART_Transmit(&huart2, (uint8_t*)transmit_distance_msg, strlen(transmit_distance_msg), TIMEOUT);
+		  HAL_Delay(10);
+		  draw_line_to_object(current_angle, filtered);
+
+		  current_angle += direction;
+
+		  //change direction at boundaries
+		  if(current_angle >= 180) {
+			  direction = -1; //start going backward
+			  ILI9341_Fill_Screen(BLACK);
+		  } else if(current_angle <= 0) {
+			  direction = 1; //start going forward
+			  ILI9341_Fill_Screen(BLACK);
+		  }
+	 }
+  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
   /* USER CODE END 3 */
 }
 
