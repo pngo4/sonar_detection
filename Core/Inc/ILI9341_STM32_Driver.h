@@ -134,8 +134,8 @@
 #define SCREEN_VERTICAL_2			2
 #define SCREEN_HORIZONTAL_2		3
 
-#define MAX_DIST_CM 100.0
-#define MAX_RADIUS_PX 100.0
+#define MAX_DIST_CM 150.0
+#define MAX_RADIUS_PX 150.0
 #define CENTER_X (ILI9341_SCREEN_WIDTH / 2)
 #define CENTER_Y (ILI9341_SCREEN_HEIGHT - 1)
 
@@ -159,6 +159,7 @@ void ILI9341_Draw_Horizontal_Line(uint16_t X, uint16_t Y, uint16_t Width, uint16
 void ILI9341_Draw_Vertical_Line(uint16_t X, uint16_t Y, uint16_t Height, uint16_t Colour);
 void ILI9341_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
 void draw_line_to_object(uint16_t angle_deg, uint16_t distance_cm);
+void draw_radar_semicircle(uint16_t center_x, uint16_t center_y, uint16_t radius, uint16_t color);
 	
 #endif
 

@@ -527,3 +527,13 @@ void ILI9341_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16
         if (e2 <= dx) { err += dx; y0 += sy; }
     }
 }
+
+void draw_radar_semicircle(uint16_t center_x, uint16_t center_y, uint16_t radius, uint16_t color) {
+for(int16_t x = -radius; x <= radius; x++) {
+	int16_t y_offset = (int16_t) sqrt(radius * radius - x*x);
+
+	if(center_y - y_offset >= 0){
+		ILI9341_Draw_Pixel(center_x + x, center_y - y_offset, color);
+		}
+	}
+}
