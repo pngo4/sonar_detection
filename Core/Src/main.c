@@ -111,16 +111,16 @@ int main(void)
   HCR04_init(&htim1);
   ILI9341_Init(&hspi1);
 
-  // Fill screen with RED (RGB565: 0xF800)
-  ILI9341_Fill_Screen(0xF800);
+  ILI9341_Fill_Screen(RED);
   HAL_Delay(1000);
 
-  // Fill screen with GREEN
-  ILI9341_Fill_Screen(0x07E0);
+  ILI9341_Fill_Screen(GREEN);
   HAL_Delay(1000);
 
-  // Fill screen with BLUE
-  ILI9341_Fill_Screen(0x001F);
+  ILI9341_Fill_Screen(BLUE);
+  HAL_Delay(1000);
+
+  ILI9341_Fill_Screen(BLACK);
   HAL_Delay(1000);
 
   // Draw a single WHITE pixel at (10, 10)
@@ -133,13 +133,14 @@ int main(void)
   {
 
 	  if(button_state == 0) {
-		  for(uint8_t angle = 0; angle <= 180; angle +=2) {
+		  for(uint16_t angle = 0; angle <= 180; angle +=2) {
 				 set_servo_angle(&htim2, TIM_CHANNEL_1, angle);
 				 uint16_t distance = HCSR04_read(&htim1);
 				 uint32_t filtered = median_filter(distance);
 				 sprintf(transmit_distance_msg, "Dist: %lu cm \r\n", filtered);
 				 HAL_UART_Transmit(&huart2, (uint8_t*)transmit_distance_msg, strlen(transmit_distance_msg), TIMEOUT);
 				 HAL_Delay(35);
+				 ILI9341_Draw_Vertical_Line(angle, 10, 50, CYAN);
 			  }
 	  }
 

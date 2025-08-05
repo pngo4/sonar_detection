@@ -85,6 +85,7 @@
 #define ILI9341_STM32_DRIVER_H
 
 #include "stm32f4xx_hal.h"
+#include <math.h>
 
 
 #define ILI9341_SCREEN_HEIGHT 240 
@@ -132,6 +133,11 @@
 #define SCREEN_VERTICAL_2			2
 #define SCREEN_HORIZONTAL_2		3
 
+#define MAX_DIST_CM 100.0
+#define MAX_RADIUS_PX 100.0
+#define CENTER_X (SCREEN_WIDTH / 2)
+#define CENTER_Y (SCREEN_HEIGHT - 1)
+
 void ILI9341_SPI_Init(SPI_HandleTypeDef *spi_handle);
 void ILI9341_SPI_Send(unsigned char SPI_Data);
 void ILI9341_Write_Command(uint8_t Command);
@@ -150,6 +156,8 @@ void ILI9341_Draw_Colour_Burst(uint16_t Colour, uint32_t Size);
 void ILI9341_Draw_Rectangle(uint16_t X, uint16_t Y, uint16_t Width, uint16_t Height, uint16_t Colour);
 void ILI9341_Draw_Horizontal_Line(uint16_t X, uint16_t Y, uint16_t Width, uint16_t Colour);
 void ILI9341_Draw_Vertical_Line(uint16_t X, uint16_t Y, uint16_t Height, uint16_t Colour);
+void ILI9341_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color);
+void draw_line_to_object(uint16_t angle_deg, uint16_t distance_cm);
 	
 #endif
 

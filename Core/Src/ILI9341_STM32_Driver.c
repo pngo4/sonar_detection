@@ -493,3 +493,37 @@ ILI9341_Set_Address(X, Y, X, Y+Height-1);
 ILI9341_Draw_Colour_Burst(Colour, Height);
 }
 
+void draw_line_to_object(uint16_t angle_deg, uint16_t distance_cm) {
+	if(distance_cm > MAX_DIST_CM) {
+		distance_cm = MAX_DIST_CM;
+	}
+
+	//convert polar to cartesian
+	float angle_rad = angle_deg * (M_PI / 180.0);
+	float scaled_dist = (distance_cm / MAX_DIST_CM) * MAX_RADIUS_PX;
+
+	//calculate the endpoint
+
+	int16_t x = CENTER_X + (int16_t)(scaled_dist * cos(angle_rad));
+	int16_t y = CENTER_Y - (int16_t)(scaled_dist * sin(angle_rad));
+
+	ILI9341_Draw_Line(CENTER_X, CENTER_Y, x, y, GREEN);
+
+}
+
+
+void ILI9341_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color)
+{
+    int16_t dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int16_t dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int16_t err = dx + dy, e2;
+
+    while (1)
+    {
+        ILI9341_DrawPixel(x0, y0, color); // plot the pixel
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+}
