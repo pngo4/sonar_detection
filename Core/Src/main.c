@@ -140,7 +140,6 @@ int main(void)
 				 sprintf(transmit_distance_msg, "Dist: %lu cm \r\n", filtered);
 				 HAL_UART_Transmit(&huart2, (uint8_t*)transmit_distance_msg, strlen(transmit_distance_msg), TIMEOUT);
 				 HAL_Delay(35);
-				 ILI9341_Draw_Vertical_Line(angle, 10, 50, CYAN);
 			  }
 	  }
 

@@ -507,7 +507,7 @@ void draw_line_to_object(uint16_t angle_deg, uint16_t distance_cm) {
 	int16_t x = CENTER_X + (int16_t)(scaled_dist * cos(angle_rad));
 	int16_t y = CENTER_Y - (int16_t)(scaled_dist * sin(angle_rad));
 
-	ILI9341_Draw_Line(CENTER_X, CENTER_Y, x, y, GREEN);
+	ILI9341_DrawLine(CENTER_X, CENTER_Y, x, y, GREEN);
 
 }
 
@@ -520,7 +520,7 @@ void ILI9341_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16
 
     while (1)
     {
-        ILI9341_DrawPixel(x0, y0, color); // plot the pixel
+        ILI9341_Draw_Pixel(x0, y0, color); // plot the pixel
         if (x0 == x1 && y0 == y1) break;
         e2 = 2 * err;
         if (e2 >= dy) { err += dy; x0 += sx; }

@@ -86,6 +86,7 @@
 
 #include "stm32f4xx_hal.h"
 #include <math.h>
+#include <stdlib.h>
 
 
 #define ILI9341_SCREEN_HEIGHT 240 
@@ -135,8 +136,8 @@
 
 #define MAX_DIST_CM 100.0
 #define MAX_RADIUS_PX 100.0
-#define CENTER_X (SCREEN_WIDTH / 2)
-#define CENTER_Y (SCREEN_HEIGHT - 1)
+#define CENTER_X (ILI9341_SCREEN_WIDTH / 2)
+#define CENTER_Y (ILI9341_SCREEN_HEIGHT - 1)
 
 void ILI9341_SPI_Init(SPI_HandleTypeDef *spi_handle);
 void ILI9341_SPI_Send(unsigned char SPI_Data);

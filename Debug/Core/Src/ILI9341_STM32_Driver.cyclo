@@ -14,3 +14,5 @@
 ../Core/Src/ILI9341_STM32_Driver.c:457:6:ILI9341_Draw_Rectangle	5
 ../Core/Src/ILI9341_STM32_Driver.c:473:6:ILI9341_Draw_Horizontal_Line	4
 ../Core/Src/ILI9341_STM32_Driver.c:485:6:ILI9341_Draw_Vertical_Line	4
+../Core/Src/ILI9341_STM32_Driver.c:496:6:draw_line_to_object	2
+../Core/Src/ILI9341_STM32_Driver.c:515:6:ILI9341_DrawLine	7
